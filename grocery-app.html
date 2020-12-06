@@ -1,0 +1,146 @@
+<html>
+    <head>
+        <title>Grocery App</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <style>
+            #main{
+                margin-top: 20%;
+            }
+            body{
+                background-color: cadetblue;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-4"></div>
+                <div class="col-sm-4">
+                    <div class="card" id="main">
+                        <div class="card-header" id="userName">Welcome User</div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="usr">Enter new item: </label>
+                                <input type="text" class="form-control" id="newItem">
+                                <br>
+                                <button type="button" class="btn btn-primary" onclick="addNewItem()">+</button>
+                              </div>
+                        </div>
+                    </div>
+                    <div id="groceryList"></div>
+                </div>
+                <div class="col-sm-4"></div>
+            </div>
+        </div>
+    </body>
+    <script type="text/javascript">
+    
+    const GROCERY_DB = [];
+    const MAX_USERS = 3;
+    const MAX_ITEMS = 5;
+
+    function addGroceryUser(newUser){
+        if (GROCERY_DB.length < MAX_USERS) {
+            GROCERY_DB.push(newUser);
+        } else {
+            GROCERY_DB.splice(0, 1);
+            GROCERY_DB.push(newUser);
+        }
+    }
+
+    function checkExistingUserIndex(userName){
+        for (let i = 0; i < GROCERY_DB.length; i++) {
+            if(userName == GROCERY_DB[i]['userName']){
+                return i;
+            }
+        }
+    }
+
+    function displayGroceryList(userIndex){
+        let GROCERY_DB = getGroceryDB();
+        let groceryItems = GROCERY_DB[userIndex]['items'];
+        let groceryItemsHtml = '<ul class="list-group">'
+        groceryItemsHtml += '<li class="list-group-item active">Here\'s your List</li>';
+        for (let j = 0; j < groceryItems.length; j++) {
+            groceryItemsHtml += '<li class="list-group-item"><p contenteditable id="'+j+'">' + groceryItems[j] + '</p>';
+            groceryItemsHtml += '&nbsp;&nbsp;<button type="button" class="btn btn-danger" onclick="editItems('+j+')">Edit/Save</button>';
+            groceryItemsHtml += '&nbsp;&nbsp;<button type="button" class="btn btn-danger" onclick="removeItems('+j+')">Delete</button></li>';
+        }
+        groceryItemsHtml += '</ul>';
+        document.getElementById('groceryList').innerHTML = groceryItemsHtml;
+    }
+
+    function saveGroceryDB(GROCERY_DB){
+        sessionStorage.setItem('GROCERY_DB', JSON.stringify(GROCERY_DB));
+    }
+
+    function getGroceryDB(){
+        let GROCERY_DB = JSON.parse(sessionStorage.getItem('GROCERY_DB'));
+        return GROCERY_DB;
+    }
+
+    function addNewItem(){
+        let newItem = document.getElementById('newItem').value;
+        let currentUser = checkExistingUserIndex(sessionStorage.getItem('currentUser'));
+        let groceryItems = GROCERY_DB[currentUser]['items'];
+        if (groceryItems.length < MAX_ITEMS) {
+            groceryItems.push(newItem);
+            GROCERY_DB[currentUser]['items'] = groceryItems;
+            saveGroceryDB(GROCERY_DB);
+            displayGroceryList(currentUser);
+        } else {
+            alert('Max Items added in your cart');
+        }
+    }
+
+    function removeItems(itemId){
+        console.log(itemId);
+        let newItem = document.getElementById(itemId).innerText;
+        let currentUser = checkExistingUserIndex(sessionStorage.getItem('currentUser'));
+        let groceryItems = GROCERY_DB[currentUser]['items'];
+        groceryItems.splice(itemId, 1);
+        saveGroceryDB(GROCERY_DB);
+        displayGroceryList(currentUser);
+    }
+
+    function editItems(itemId){
+        let newItem = document.getElementById(itemId).innerText.replace('   Edit  Delete', '');
+        let currentUser = checkExistingUserIndex(sessionStorage.getItem('currentUser'));
+        let groceryItems = GROCERY_DB[currentUser]['items'];
+        groceryItems[itemId] = newItem;
+        GROCERY_DB[currentUser]['items'] = groceryItems;
+        saveGroceryDB(GROCERY_DB);
+        displayGroceryList(currentUser);
+    }
+
+    function startApp(){
+        let userName = window.prompt('Enter your Name: ');
+        
+        if(userName == ''){
+            alert('userName cannot be empty');
+            userName = window.prompt('Enter your Name: ');
+        }
+        document.getElementById('userName').textContent = 'Welcome ' + userName;
+        sessionStorage.setItem('currentUser', userName);
+        let userIndex = checkExistingUserIndex(userName);
+
+        if (userIndex == undefined){
+            console.log('ssss')
+            let newUser = {
+                'userName': userName,
+                'items': []
+            }
+            addGroceryUser(newUser);
+            saveGroceryDB(GROCERY_DB);
+            userIndex = 0;
+        }
+        displayGroceryList(userIndex);
+    }
+    startApp();
+    </script>
+</html>
